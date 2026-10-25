@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.2.0"
+const version = "0.3.0"
 
 // Client calls the Mapricot API. Its fields can be changed before first use.
 type Client struct {
@@ -103,9 +103,17 @@ type Leg struct {
 type Route struct {
 	DistanceMeters  int `json:"distanceMeters"`
 	DurationSeconds int `json:"durationSeconds"`
-	// Polyline is encoded with six decimal places of precision.
+	// Polyline is encoded with five decimal places, or six for the polyline6 geometries. It is empty for geojson.
 	Polyline string `json:"polyline"`
-	Legs     []Leg  `json:"legs"`
+	// Geometry is set for the geojson geometries.
+	Geometry *LineString `json:"geometry"`
+	Legs     []Leg       `json:"legs"`
+}
+
+// LineString is a GeoJSON line, with each point as [longitude, latitude].
+type LineString struct {
+	Type        string       `json:"type"`
+	Coordinates [][2]float64 `json:"coordinates"`
 }
 
 // Routes is empty when no path connects the waypoints.
@@ -164,9 +172,11 @@ type PlaceOptions struct {
 	Lang string
 }
 
-// RouteOptions are optional parameters for Route. Mode is "drive" (the default), "walk", or "bicycle".
+// RouteOptions are optional parameters for Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
+// is "polyline" (the default), "polyline6", or "geojson".
 type RouteOptions struct {
-	Mode string
+	Mode       string
+	Geometries string
 }
 
 // Search finds addresses and places matching free text.
@@ -213,11 +223,13 @@ func (c *Client) Place(ctx context.Context, id string, opts *PlaceOptions) (*Pla
 // Route finds a route through 2 to 20 waypoints, visited in order.
 func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOptions) (*Routes, error) {
 	body := struct {
-		Waypoints []Point `json:"waypoints"`
-		Mode      string  `json:"mode,omitempty"`
+		Waypoints  []Point `json:"waypoints"`
+		Mode       string  `json:"mode,omitempty"`
+		Geometries string  `json:"geometries,omitempty"`
 	}{Waypoints: waypoints}
 	if opts != nil {
 		body.Mode = opts.Mode
+		body.Geometries = opts.Geometries
 	}
 	encoded, err := json.Marshal(body)
 	if err != nil {

@@ -86,6 +86,16 @@ func TestRoute(t *testing.T) {
 	}
 }
 
+func TestRouteGeoJSON(t *testing.T) {
+	routes, err := live(t).Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Geometries: "geojson"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if geometry := routes.Routes[0].Geometry; geometry == nil || geometry.Type != "LineString" || len(geometry.Coordinates) < 2 {
+		t.Errorf("got %+v", routes)
+	}
+}
+
 func TestIP(t *testing.T) {
 	location, err := live(t).IP(context.Background(), "8.8.8.8")
 	if err != nil {

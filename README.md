@@ -59,7 +59,7 @@ nearby, err := client.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Catego
 routes, err := client.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
 ```
 
-A route's `Polyline` is encoded with six decimal places. Decode it with precision 6, as [decoding a route polyline](https://mapricot.com/docs/polyline/) shows.
+A route's `Polyline` is encoded with six decimal places. Decode it with precision 6, as [decoding a route polyline](https://mapricot.com/guides/polyline-decoder/) shows.
 
 If your app shows results, show the credits in each response's `Attribution`.
 

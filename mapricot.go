@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.4.0"
+const version = "0.5.0"
 
 // Client calls the Mapricot API. Its fields can be changed before first use.
 type Client struct {
@@ -120,6 +120,29 @@ type LineString struct {
 type Routes struct {
 	Routes      []Route       `json:"routes"`
 	Attribution []Attribution `json:"attribution"`
+}
+
+// Isochrones is a GeoJSON FeatureCollection with one area per time, largest first. Features is empty when there is
+// no road near the location.
+type Isochrones struct {
+	Type        string        `json:"type"`
+	Features    []Isochrone   `json:"features"`
+	Attribution []Attribution `json:"attribution"`
+}
+
+type Isochrone struct {
+	Type       string `json:"type"`
+	Properties struct {
+		Minutes int `json:"minutes"`
+	} `json:"properties"`
+	Geometry Polygon `json:"geometry"`
+}
+
+// Polygon is a GeoJSON Polygon or MultiPolygon. Coordinates holds its rings of [longitude, latitude] points as JSON,
+// nested one level deeper for a MultiPolygon.
+type Polygon struct {
+	Type        string          `json:"type"`
+	Coordinates json.RawMessage `json:"coordinates"`
 }
 
 type IPLocation struct {
@@ -240,6 +263,32 @@ func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOption
 		return nil, err
 	}
 	return &routes, nil
+}
+
+// IsochroneOptions are optional parameters for Isochrone. Mode is "drive" (the default), "walk", or "bicycle".
+type IsochroneOptions struct {
+	Mode string
+}
+
+// Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 60 minutes.
+func (c *Client) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
+	body := struct {
+		Location Point  `json:"location"`
+		Minutes  []int  `json:"minutes"`
+		Mode     string `json:"mode,omitempty"`
+	}{Location: location, Minutes: minutes}
+	if opts != nil {
+		body.Mode = opts.Mode
+	}
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	var isochrones Isochrones
+	if err := c.do(ctx, http.MethodPost, "/routing/v1/isochrone", nil, encoded, &isochrones); err != nil {
+		return nil, err
+	}
+	return &isochrones, nil
 }
 
 // IP returns the approximate location of a public IP address.

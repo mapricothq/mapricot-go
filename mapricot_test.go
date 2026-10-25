@@ -138,7 +138,7 @@ func stub(t *testing.T, failures ...failure) (*Client, *[]string) {
 		}
 		f := failures[len(seen)-1]
 		w.WriteHeader(f.status)
-		json.NewEncoder(w).Encode(map[string]any{"error": map[string]string{"code": f.code, "message": f.code}, "request_id": "r1"})
+		json.NewEncoder(w).Encode(map[string]any{"error": map[string]string{"code": f.code, "message": f.code}, "requestId": "r1"})
 	}))
 	t.Cleanup(server.Close)
 	client := NewClient("k")

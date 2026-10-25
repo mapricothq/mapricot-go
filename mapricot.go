@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.1.0"
+const version = "0.2.0"
 
 // Client calls the Mapricot API. Its fields can be changed before first use.
 type Client struct {
@@ -134,7 +134,7 @@ type Account struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
 	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // SearchOptions are optional parameters for Search and Autocomplete. Zero values are left out.

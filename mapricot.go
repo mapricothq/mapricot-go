@@ -270,7 +270,7 @@ type IsochroneOptions struct {
 	Mode string
 }
 
-// Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 120 minutes.
+// Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 60 minutes.
 func (c *Client) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
 	body := struct {
 		Location Point  `json:"location"`

@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.6.0"
+const version = "0.7.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -121,6 +121,18 @@ type PlaceResult struct {
 type Leg struct {
 	DistanceMeters  int `json:"distanceMeters"`
 	DurationSeconds int `json:"durationSeconds"`
+	// Steps are the leg's turn-by-turn directions, in order, when RouteOptions.Steps is set. The last one is the
+	// arrival.
+	Steps []Step `json:"steps"`
+}
+
+// Step is one maneuver, at Lat and Lon on the route's path, and the stretch from it to the next.
+type Step struct {
+	Instruction     string  `json:"instruction"`
+	DistanceMeters  int     `json:"distanceMeters"`
+	DurationSeconds int     `json:"durationSeconds"`
+	Lat             float64 `json:"lat"`
+	Lon             float64 `json:"lon"`
 }
 
 type Route struct {
@@ -219,10 +231,13 @@ type PlaceOptions struct {
 }
 
 // RouteOptions are optional parameters for RoutingService.Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
-// is "polyline" (the default), "polyline6", or "geojson".
+// is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps, and Lang is their
+// ISO 639-1 language, English by default.
 type RouteOptions struct {
 	Mode       string
 	Geometries string
+	Steps      bool
+	Lang       string
 }
 
 // Search finds addresses and places matching free text.
@@ -272,10 +287,14 @@ func (s *RoutingService) Route(ctx context.Context, waypoints []Point, opts *Rou
 		Waypoints  []Point `json:"waypoints"`
 		Mode       string  `json:"mode,omitempty"`
 		Geometries string  `json:"geometries,omitempty"`
+		Steps      bool    `json:"steps,omitempty"`
+		Lang       string  `json:"lang,omitempty"`
 	}{Waypoints: waypoints}
 	if opts != nil {
 		body.Mode = opts.Mode
 		body.Geometries = opts.Geometries
+		body.Steps = opts.Steps
+		body.Lang = opts.Lang
 	}
 	encoded, err := json.Marshal(body)
 	if err != nil {

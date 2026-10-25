@@ -12,11 +12,7 @@ It needs Go 1.22 or later and has no dependencies outside the standard library.
 
 ## Quick start
 
-Create a server key in the [dashboard](https://app.mapricot.com/) and set it as `MAPRICOT_KEY`:
-
-```sh
-export MAPRICOT_KEY="mapricot_sk_…"
-```
+Create a server key in the [dashboard](https://app.mapricot.com/) and pass it to the client. Keep it out of your source code, for example by reading it from an environment variable as here.
 
 ```go
 package main

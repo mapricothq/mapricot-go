@@ -161,7 +161,7 @@ func TestRetries(t *testing.T) {
 	if _, err := client.Search(context.Background(), "x", &SearchOptions{Focus: &Point{1, 2}, Country: []string{"US", "CA"}}); err != nil {
 		t.Fatal(err)
 	}
-	if len(*seen) != 3 || (*seen)[0] != "/v1/search?country=US%2CCA&focus=1%2C2&q=x" {
+	if len(*seen) != 3 || (*seen)[0] != "/geocoding/v1/search?country=US%2CCA&focus=1%2C2&q=x" {
 		t.Errorf("requests %v", *seen)
 	}
 }

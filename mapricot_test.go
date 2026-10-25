@@ -84,6 +84,20 @@ func TestRoute(t *testing.T) {
 	if len(routes.Routes[0].Legs) != 1 || routes.Routes[0].Polyline == "" {
 		t.Errorf("got %+v", routes)
 	}
+	if steps := routes.Routes[0].Legs[0].Steps; len(steps) < 2 || steps[len(steps)-1].Instruction == "" {
+		t.Errorf("steps: %+v", steps)
+	}
+}
+
+func TestRouteStepsInFrench(t *testing.T) {
+	routes, err := live(t).Routing.Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Lang: "fr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := routes.Routes[0].Legs[0].Steps
+	if len(steps) == 0 || !strings.Contains(steps[len(steps)-1].Instruction, "destination") {
+		t.Errorf("steps: %+v", steps)
+	}
 }
 
 func TestRouteGeoJSON(t *testing.T) {

@@ -51,6 +51,7 @@ Each method returns a typed struct with the fields in the [API reference](https:
 | `Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
 | `Place(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
 | `Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
+| `Isochrone(ctx, location, minutes, *IsochroneOptions)` | [`POST /routing/v1/isochrone`](https://mapricot.com/docs/routing/#get-an-isochrone) |
 | `IP(ctx, ip)` | [`GET /ip-geolocation/v1/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
 | `Account(ctx)` | `GET /account`, which checks a key and is never billed |
 
@@ -60,6 +61,12 @@ routes, err := client.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}
 ```
 
 A route's path comes as an encoded `Polyline` with five decimal places, which polyline decoders assume. Set `Geometries: "geojson"` to get it as a GeoJSON `LineString` in `Geometry` instead, which maps draw without decoding, or `Geometries: "polyline6"` for six decimal places.
+
+An isochrone is a GeoJSON `FeatureCollection` with one polygon per time, largest first, so a map that draws them in order shows the smaller ones on top. Each `Geometry.Coordinates` is the polygon's raw GeoJSON coordinates:
+
+```go
+area, err := client.Isochrone(ctx, mapricot.Point{Lat: 45.5189, Lon: -122.6793}, []int{5, 10}, &mapricot.IsochroneOptions{Mode: "walk"})
+```
 
 If your app shows results, show the credits in each response's `Attribution`.
 

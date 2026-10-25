@@ -96,6 +96,16 @@ func TestRouteGeoJSON(t *testing.T) {
 	}
 }
 
+func TestIsochrone(t *testing.T) {
+	isochrones, err := live(t).Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(isochrones.Features) != 2 || isochrones.Features[0].Properties.Minutes != 10 || isochrones.Features[0].Geometry.Type != "Polygon" || len(isochrones.Attribution) == 0 {
+		t.Errorf("got %+v", isochrones)
+	}
+}
+
 func TestIP(t *testing.T) {
 	location, err := live(t).IP(context.Background(), "8.8.8.8")
 	if err != nil {

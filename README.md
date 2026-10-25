@@ -62,7 +62,7 @@ routes, err := client.Routing.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -1
 
 A route's path comes as an encoded `Polyline` with five decimal places, which polyline decoders assume. Set `Geometries: "geojson"` to get it as a GeoJSON `LineString` in `Geometry` instead, which maps draw without decoding, or `Geometries: "polyline6"` for six decimal places.
 
-Each leg's `Steps` has its turn-by-turn directions: an `Instruction`, its distance and time, and its `Lat` and `Lon`. They're in English unless you set `Lang`, such as `Lang: "fr"`.
+Set `Steps: true` and each leg's `Steps` has its turn-by-turn directions: an `Instruction`, its distance and time, and its `Lat` and `Lon`. They're in English unless you set `Lang`, such as `Lang: "fr"`.
 
 An isochrone is a GeoJSON `FeatureCollection` with one polygon per time, largest first, so a map that draws them in order shows the smaller ones on top. Each `Geometry.Coordinates` is the polygon's raw GeoJSON coordinates:
 

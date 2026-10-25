@@ -121,7 +121,8 @@ type PlaceResult struct {
 type Leg struct {
 	DistanceMeters  int `json:"distanceMeters"`
 	DurationSeconds int `json:"durationSeconds"`
-	// Steps are the leg's turn-by-turn directions, in order. The last one is the arrival.
+	// Steps are the leg's turn-by-turn directions, in order, when RouteOptions.Steps is set. The last one is the
+	// arrival.
 	Steps []Step `json:"steps"`
 }
 
@@ -230,11 +231,12 @@ type PlaceOptions struct {
 }
 
 // RouteOptions are optional parameters for RoutingService.Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
-// is "polyline" (the default), "polyline6", or "geojson". Lang is the ISO 639-1 language of the steps, English by
-// default.
+// is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps, and Lang is their
+// ISO 639-1 language, English by default.
 type RouteOptions struct {
 	Mode       string
 	Geometries string
+	Steps      bool
 	Lang       string
 }
 
@@ -285,11 +287,13 @@ func (s *RoutingService) Route(ctx context.Context, waypoints []Point, opts *Rou
 		Waypoints  []Point `json:"waypoints"`
 		Mode       string  `json:"mode,omitempty"`
 		Geometries string  `json:"geometries,omitempty"`
+		Steps      bool    `json:"steps,omitempty"`
 		Lang       string  `json:"lang,omitempty"`
 	}{Waypoints: waypoints}
 	if opts != nil {
 		body.Mode = opts.Mode
 		body.Geometries = opts.Geometries
+		body.Steps = opts.Steps
 		body.Lang = opts.Lang
 	}
 	encoded, err := json.Marshal(body)

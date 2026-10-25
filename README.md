@@ -12,11 +12,7 @@ It needs Go 1.22 or later and has no dependencies outside the standard library.
 
 ## Quick start
 
-Create a server key in the [dashboard](https://app.mapricot.com/) and set it as `MAPRICOT_KEY`:
-
-```sh
-export MAPRICOT_KEY="mapricot_sk_…"
-```
+Create a server key in the [dashboard](https://app.mapricot.com/) and pass it to the client. Keep it out of your source code, for example by reading it from an environment variable as here.
 
 ```go
 package main
@@ -63,7 +59,7 @@ nearby, err := client.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Catego
 routes, err := client.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
 ```
 
-A route's `Polyline` is encoded with six decimal places. Decode it with precision 6, as [decoding a route polyline](https://mapricot.com/docs/polyline/) shows.
+A route's `Polyline` is encoded with six decimal places. Decode it with precision 6, as [decoding a route polyline](https://mapricot.com/guides/polyline-decoder/) shows.
 
 If your app shows results, show the credits in each response's `Attribution`.
 

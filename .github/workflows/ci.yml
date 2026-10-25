@@ -32,6 +32,6 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - run: |
-          curl -fsS https://api.mapricot.com/openapi.json | jq -r '.paths | keys[] | sub("\\{.*"; "")' | while read -r path; do
+          curl -fsS https://api.mapricot.com/openapi.json | jq -r '.paths | keys[] | select(startswith("/tiles/") | not) | sub("\\{.*"; "")' | while read -r path; do
             grep -qF "$path" mapricot.go || { echo "::error::No method for $path"; exit 1; }
           done

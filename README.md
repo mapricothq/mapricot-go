@@ -29,7 +29,7 @@ import (
 func main() {
 	client := mapricot.NewClient(os.Getenv("MAPRICOT_KEY"))
 
-	places, err := client.Search(context.Background(), "128 SW 3rd Ave, Portland", &mapricot.SearchOptions{Limit: 1})
+	places, err := client.Geocoding.Search(context.Background(), "128 SW 3rd Ave, Portland", &mapricot.SearchOptions{Limit: 1})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,23 +41,23 @@ func main() {
 
 ## Methods
 
-Each method returns a typed struct with the fields in the [API reference](https://mapricot.com/api-reference/). Options can be `nil`, and their zero values are left out of the request.
+Methods are grouped by product, the same way as the API's paths. Each returns a typed struct with the fields in the [API reference](https://mapricot.com/api-reference/). Options can be `nil`, and their zero values are left out of the request.
 
 | Method | Endpoint |
 | --- | --- |
-| `Search(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
-| `Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
-| `Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
-| `Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
-| `Place(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
-| `Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
-| `Isochrone(ctx, location, minutes, *IsochroneOptions)` | [`POST /routing/v1/isochrone`](https://mapricot.com/docs/routing/#get-an-isochrone) |
-| `IP(ctx, ip)` | [`GET /ip-geolocation/v1/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
-| `Account(ctx)` | `GET /account`, which checks a key and is never billed |
+| `client.Geocoding.Search(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
+| `client.Geocoding.Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
+| `client.Geocoding.Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
+| `client.Places.Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
+| `client.Places.Get(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
+| `client.Routing.Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
+| `client.Routing.Isochrone(ctx, location, minutes, *IsochroneOptions)` | [`POST /routing/v1/isochrone`](https://mapricot.com/docs/routing/#get-an-isochrone) |
+| `client.IPGeolocation.Lookup(ctx, ip)` | [`GET /ip-geolocation/v1/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
+| `client.Account(ctx)` | `GET /account`, which checks a key and is never billed |
 
 ```go
-nearby, err := client.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})
-routes, err := client.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
+nearby, err := client.Places.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})
+routes, err := client.Routing.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
 ```
 
 A route's path comes as an encoded `Polyline` with five decimal places, which polyline decoders assume. Set `Geometries: "geojson"` to get it as a GeoJSON `LineString` in `Geometry` instead, which maps draw without decoding, or `Geometries: "polyline6"` for six decimal places.
@@ -65,7 +65,7 @@ A route's path comes as an encoded `Polyline` with five decimal places, which po
 An isochrone is a GeoJSON `FeatureCollection` with one polygon per time, largest first, so a map that draws them in order shows the smaller ones on top. Each `Geometry.Coordinates` is the polygon's raw GeoJSON coordinates:
 
 ```go
-area, err := client.Isochrone(ctx, mapricot.Point{Lat: 45.5189, Lon: -122.6793}, []int{5, 10}, &mapricot.IsochroneOptions{Mode: "walk"})
+area, err := client.Routing.Isochrone(ctx, mapricot.Point{Lat: 45.5189, Lon: -122.6793}, []int{5, 10}, &mapricot.IsochroneOptions{Mode: "walk"})
 ```
 
 If your app shows results, show the credits in each response's `Attribution`.
@@ -75,7 +75,7 @@ If your app shows results, show the credits in each response's `Attribution`.
 An error response returns a `*mapricot.Error`, with the HTTP `Status`, the API's error `Code`, a `Message`, and the `RequestID`:
 
 ```go
-_, err := client.Search(ctx, "", nil)
+_, err := client.Geocoding.Search(ctx, "", nil)
 var apiErr *mapricot.Error
 if errors.As(err, &apiErr) {
 	fmt.Println(apiErr.Status, apiErr.Code) // 400 invalid_request

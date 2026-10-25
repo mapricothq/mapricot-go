@@ -22,7 +22,7 @@ func live(t *testing.T) *Client {
 }
 
 func TestSearch(t *testing.T) {
-	places, err := live(t).Search(context.Background(), "128 SW 3rd Ave, Portland", &SearchOptions{Country: []string{"US"}, Limit: 1})
+	places, err := live(t).Geocoding.Search(context.Background(), "128 SW 3rd Ave, Portland", &SearchOptions{Country: []string{"US"}, Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +32,7 @@ func TestSearch(t *testing.T) {
 }
 
 func TestAutocomplete(t *testing.T) {
-	places, err := live(t).Autocomplete(context.Background(), "stumptown", &SearchOptions{Focus: &Point{45.52, -122.68}, Limit: 1})
+	places, err := live(t).Geocoding.Autocomplete(context.Background(), "stumptown", &SearchOptions{Focus: &Point{45.52, -122.68}, Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func TestAutocomplete(t *testing.T) {
 }
 
 func TestReverse(t *testing.T) {
-	places, err := live(t).Reverse(context.Background(), 45.5217, -122.6733, &ReverseOptions{Limit: 1})
+	places, err := live(t).Geocoding.Reverse(context.Background(), 45.5217, -122.6733, &ReverseOptions{Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestReverse(t *testing.T) {
 }
 
 func TestNearby(t *testing.T) {
-	places, err := live(t).Nearby(context.Background(), 45.52, -122.68, &NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000, Limit: 1})
+	places, err := live(t).Places.Nearby(context.Background(), 45.52, -122.68, &NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000, Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -61,13 +61,13 @@ func TestNearby(t *testing.T) {
 	}
 }
 
-func TestPlace(t *testing.T) {
+func TestPlacesGet(t *testing.T) {
 	client := live(t)
-	places, err := client.Search(context.Background(), "Pioneer Courthouse Square, Portland", &SearchOptions{Limit: 1})
+	places, err := client.Geocoding.Search(context.Background(), "Pioneer Courthouse Square, Portland", &SearchOptions{Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
-	place, err := client.Place(context.Background(), places.Results[0].ID, nil)
+	place, err := client.Places.Get(context.Background(), places.Results[0].ID, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +77,7 @@ func TestPlace(t *testing.T) {
 }
 
 func TestRoute(t *testing.T) {
-	routes, err := live(t).Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Mode: "walk"})
+	routes, err := live(t).Routing.Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Mode: "walk"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,7 +87,7 @@ func TestRoute(t *testing.T) {
 }
 
 func TestRouteGeoJSON(t *testing.T) {
-	routes, err := live(t).Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Geometries: "geojson"})
+	routes, err := live(t).Routing.Route(context.Background(), []Point{{43.7396, 7.4275}, {43.734, 7.4222}}, &RouteOptions{Geometries: "geojson"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func TestRouteGeoJSON(t *testing.T) {
 }
 
 func TestIsochrone(t *testing.T) {
-	isochrones, err := live(t).Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
+	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,8 +106,8 @@ func TestIsochrone(t *testing.T) {
 	}
 }
 
-func TestIP(t *testing.T) {
-	location, err := live(t).IP(context.Background(), "8.8.8.8")
+func TestIPGeolocationLookup(t *testing.T) {
+	location, err := live(t).IPGeolocation.Lookup(context.Background(), "8.8.8.8")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func TestAccount(t *testing.T) {
 }
 
 func TestInvalidRequest(t *testing.T) {
-	_, err := live(t).Search(context.Background(), "", nil)
+	_, err := live(t).Geocoding.Search(context.Background(), "", nil)
 	var apiErr *Error
 	if !errors.As(err, &apiErr) || apiErr.Status != 400 || apiErr.Code != "invalid_request" || apiErr.RequestID == "" {
 		t.Errorf("got %v", err)
@@ -168,7 +168,7 @@ func stub(t *testing.T, failures ...failure) (*Client, *[]string) {
 
 func TestRetries(t *testing.T) {
 	client, seen := stub(t, failure{503, "origin_overloaded"}, failure{429, "concurrency_exceeded"})
-	if _, err := client.Search(context.Background(), "x", &SearchOptions{Focus: &Point{1, 2}, Country: []string{"US", "CA"}}); err != nil {
+	if _, err := client.Geocoding.Search(context.Background(), "x", &SearchOptions{Focus: &Point{1, 2}, Country: []string{"US", "CA"}}); err != nil {
 		t.Fatal(err)
 	}
 	if len(*seen) != 3 || (*seen)[0] != "/geocoding/v1/search?country=US%2CCA&focus=1%2C2&q=x" {

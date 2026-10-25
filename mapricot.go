@@ -14,9 +14,10 @@ import (
 	"time"
 )
 
-const version = "0.5.0"
+const version = "0.6.0"
 
-// Client calls the Mapricot API. Its fields can be changed before first use.
+// Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
+// client.Geocoding.Search. Its settings can be changed before first use.
 type Client struct {
 	APIKey  string
 	BaseURL string
@@ -24,16 +25,38 @@ type Client struct {
 	HTTPClient *http.Client
 	// MaxRetries is how many times a 503 or a 429 with too many requests in progress is retried.
 	MaxRetries int
+
+	Geocoding     *GeocodingService
+	Places        *PlacesService
+	Routing       *RoutingService
+	IPGeolocation *IPGeolocationService
 }
+
+// GeocodingService calls the /geocoding/v1 endpoints.
+type GeocodingService struct{ client *Client }
+
+// PlacesService calls the /places/v1 endpoints.
+type PlacesService struct{ client *Client }
+
+// RoutingService calls the /routing/v1 endpoints.
+type RoutingService struct{ client *Client }
+
+// IPGeolocationService calls the /ip-geolocation/v1 endpoints.
+type IPGeolocationService struct{ client *Client }
 
 // NewClient returns a client that authenticates with apiKey, such as os.Getenv("MAPRICOT_KEY").
 func NewClient(apiKey string) *Client {
-	return &Client{
+	c := &Client{
 		APIKey:     apiKey,
 		BaseURL:    "https://api.mapricot.com",
 		HTTPClient: &http.Client{Timeout: 30 * time.Second},
 		MaxRetries: 2,
 	}
+	c.Geocoding = &GeocodingService{c}
+	c.Places = &PlacesService{c}
+	c.Routing = &RoutingService{c}
+	c.IPGeolocation = &IPGeolocationService{c}
+	return c
 }
 
 // Error is an error response from the API.
@@ -168,7 +191,7 @@ type Account struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-// SearchOptions are optional parameters for Search and Autocomplete. Zero values are left out.
+// SearchOptions are optional parameters for GeocodingService.Search and Autocomplete. Zero values are left out.
 type SearchOptions struct {
 	Focus   *Point
 	Country []string
@@ -176,13 +199,13 @@ type SearchOptions struct {
 	Lang    string
 }
 
-// ReverseOptions are optional parameters for Reverse. Zero values are left out.
+// ReverseOptions are optional parameters for GeocodingService.Reverse. Zero values are left out.
 type ReverseOptions struct {
 	Limit int
 	Lang  string
 }
 
-// NearbyOptions are optional parameters for Nearby. Zero values are left out.
+// NearbyOptions are optional parameters for PlacesService.Nearby. Zero values are left out.
 type NearbyOptions struct {
 	Category []string
 	Radius   int
@@ -190,12 +213,12 @@ type NearbyOptions struct {
 	Lang     string
 }
 
-// PlaceOptions are optional parameters for Place. Zero values are left out.
+// PlaceOptions are optional parameters for PlacesService.Get. Zero values are left out.
 type PlaceOptions struct {
 	Lang string
 }
 
-// RouteOptions are optional parameters for Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
+// RouteOptions are optional parameters for RoutingService.Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
 // is "polyline" (the default), "polyline6", or "geojson".
 type RouteOptions struct {
 	Mode       string
@@ -203,27 +226,27 @@ type RouteOptions struct {
 }
 
 // Search finds addresses and places matching free text.
-func (c *Client) Search(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
-	return get[Places](ctx, c, "/geocoding/v1/search", searchQuery(q, opts))
+func (s *GeocodingService) Search(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
+	return get[Places](ctx, s.client, "/geocoding/v1/search", searchQuery(q, opts))
 }
 
 // Autocomplete suggests addresses and places as someone types.
-func (c *Client) Autocomplete(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
-	return get[Places](ctx, c, "/geocoding/v1/autocomplete", searchQuery(q, opts))
+func (s *GeocodingService) Autocomplete(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
+	return get[Places](ctx, s.client, "/geocoding/v1/autocomplete", searchQuery(q, opts))
 }
 
 // Reverse finds the address nearest a coordinate, or the area around it.
-func (c *Client) Reverse(ctx context.Context, lat, lon float64, opts *ReverseOptions) (*Places, error) {
+func (s *GeocodingService) Reverse(ctx context.Context, lat, lon float64, opts *ReverseOptions) (*Places, error) {
 	query := pointQuery(lat, lon)
 	if opts != nil {
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
 	}
-	return get[Places](ctx, c, "/geocoding/v1/reverse", query)
+	return get[Places](ctx, s.client, "/geocoding/v1/reverse", query)
 }
 
 // Nearby lists places around a coordinate, optionally by category.
-func (c *Client) Nearby(ctx context.Context, lat, lon float64, opts *NearbyOptions) (*Places, error) {
+func (s *PlacesService) Nearby(ctx context.Context, lat, lon float64, opts *NearbyOptions) (*Places, error) {
 	query := pointQuery(lat, lon)
 	if opts != nil {
 		setString(query, "category", strings.Join(opts.Category, ","))
@@ -231,20 +254,20 @@ func (c *Client) Nearby(ctx context.Context, lat, lon float64, opts *NearbyOptio
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
 	}
-	return get[Places](ctx, c, "/places/v1/nearby", query)
+	return get[Places](ctx, s.client, "/places/v1/nearby", query)
 }
 
-// Place looks up one place by its Mapricot ID. An ID that no longer resolves returns an *Error with Status 404.
-func (c *Client) Place(ctx context.Context, id string, opts *PlaceOptions) (*PlaceResult, error) {
+// Get looks up one place by its Mapricot ID. An ID that no longer resolves returns an *Error with Status 404.
+func (s *PlacesService) Get(ctx context.Context, id string, opts *PlaceOptions) (*PlaceResult, error) {
 	query := url.Values{}
 	if opts != nil {
 		setString(query, "lang", opts.Lang)
 	}
-	return get[PlaceResult](ctx, c, "/places/v1/"+url.PathEscape(id), query)
+	return get[PlaceResult](ctx, s.client, "/places/v1/"+url.PathEscape(id), query)
 }
 
 // Route finds a route through 2 to 20 waypoints, visited in order.
-func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOptions) (*Routes, error) {
+func (s *RoutingService) Route(ctx context.Context, waypoints []Point, opts *RouteOptions) (*Routes, error) {
 	body := struct {
 		Waypoints  []Point `json:"waypoints"`
 		Mode       string  `json:"mode,omitempty"`
@@ -259,19 +282,19 @@ func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOption
 		return nil, err
 	}
 	var routes Routes
-	if err := c.do(ctx, http.MethodPost, "/routing/v1/route", nil, encoded, &routes); err != nil {
+	if err := s.client.do(ctx, http.MethodPost, "/routing/v1/route", nil, encoded, &routes); err != nil {
 		return nil, err
 	}
 	return &routes, nil
 }
 
-// IsochroneOptions are optional parameters for Isochrone. Mode is "drive" (the default), "walk", or "bicycle".
+// IsochroneOptions are optional parameters for RoutingService.Isochrone. Mode is "drive" (the default), "walk", or "bicycle".
 type IsochroneOptions struct {
 	Mode string
 }
 
 // Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 60 minutes.
-func (c *Client) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
+func (s *RoutingService) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
 	body := struct {
 		Location Point  `json:"location"`
 		Minutes  []int  `json:"minutes"`
@@ -285,15 +308,15 @@ func (c *Client) Isochrone(ctx context.Context, location Point, minutes []int, o
 		return nil, err
 	}
 	var isochrones Isochrones
-	if err := c.do(ctx, http.MethodPost, "/routing/v1/isochrone", nil, encoded, &isochrones); err != nil {
+	if err := s.client.do(ctx, http.MethodPost, "/routing/v1/isochrone", nil, encoded, &isochrones); err != nil {
 		return nil, err
 	}
 	return &isochrones, nil
 }
 
-// IP returns the approximate location of a public IP address.
-func (c *Client) IP(ctx context.Context, ip string) (*IPLocation, error) {
-	return get[IPLocation](ctx, c, "/ip-geolocation/v1/"+url.PathEscape(ip), nil)
+// Lookup returns the approximate location of a public IP address.
+func (s *IPGeolocationService) Lookup(ctx context.Context, ip string) (*IPLocation, error) {
+	return get[IPLocation](ctx, s.client, "/ip-geolocation/v1/"+url.PathEscape(ip), nil)
 }
 
 // Account returns the key's account. It isn't billed, so it checks a key for free.

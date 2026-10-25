@@ -45,14 +45,14 @@ Each method returns a typed struct with the fields in the [API reference](https:
 
 | Method | Endpoint |
 | --- | --- |
-| `Search(ctx, q, *SearchOptions)` | [`GET /v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
-| `Autocomplete(ctx, q, *SearchOptions)` | [`GET /v1/autocomplete`](https://mapricot.com/docs/places/#suggest-as-people-type) |
-| `Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
-| `Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
-| `Place(ctx, id, *PlaceOptions)` | [`GET /v1/places/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
-| `Route(ctx, waypoints, *RouteOptions)` | [`POST /v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
-| `IP(ctx, ip)` | [`GET /v1/ip/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
-| `Account(ctx)` | `GET /v1/account`, which checks a key and is never billed |
+| `Search(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
+| `Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
+| `Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
+| `Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
+| `Place(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
+| `Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
+| `IP(ctx, ip)` | [`GET /ip-geolocation/v1/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
+| `Account(ctx)` | `GET /account`, which checks a key and is never billed |
 
 ```go
 nearby, err := client.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})

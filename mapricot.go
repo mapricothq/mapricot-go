@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.3.0"
+const version = "0.4.0"
 
 // Client calls the Mapricot API. Its fields can be changed before first use.
 type Client struct {
@@ -181,12 +181,12 @@ type RouteOptions struct {
 
 // Search finds addresses and places matching free text.
 func (c *Client) Search(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
-	return get[Places](ctx, c, "/v1/search", searchQuery(q, opts))
+	return get[Places](ctx, c, "/geocoding/v1/search", searchQuery(q, opts))
 }
 
 // Autocomplete suggests addresses and places as someone types.
 func (c *Client) Autocomplete(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
-	return get[Places](ctx, c, "/v1/autocomplete", searchQuery(q, opts))
+	return get[Places](ctx, c, "/geocoding/v1/autocomplete", searchQuery(q, opts))
 }
 
 // Reverse finds the address nearest a coordinate, or the area around it.
@@ -196,7 +196,7 @@ func (c *Client) Reverse(ctx context.Context, lat, lon float64, opts *ReverseOpt
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
 	}
-	return get[Places](ctx, c, "/v1/reverse", query)
+	return get[Places](ctx, c, "/geocoding/v1/reverse", query)
 }
 
 // Nearby lists places around a coordinate, optionally by category.
@@ -208,7 +208,7 @@ func (c *Client) Nearby(ctx context.Context, lat, lon float64, opts *NearbyOptio
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
 	}
-	return get[Places](ctx, c, "/v1/nearby", query)
+	return get[Places](ctx, c, "/places/v1/nearby", query)
 }
 
 // Place looks up one place by its Mapricot ID. An ID that no longer resolves returns an *Error with Status 404.
@@ -217,7 +217,7 @@ func (c *Client) Place(ctx context.Context, id string, opts *PlaceOptions) (*Pla
 	if opts != nil {
 		setString(query, "lang", opts.Lang)
 	}
-	return get[PlaceResult](ctx, c, "/v1/places/"+url.PathEscape(id), query)
+	return get[PlaceResult](ctx, c, "/places/v1/"+url.PathEscape(id), query)
 }
 
 // Route finds a route through 2 to 20 waypoints, visited in order.
@@ -236,7 +236,7 @@ func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOption
 		return nil, err
 	}
 	var routes Routes
-	if err := c.do(ctx, http.MethodPost, "/v1/route", nil, encoded, &routes); err != nil {
+	if err := c.do(ctx, http.MethodPost, "/routing/v1/route", nil, encoded, &routes); err != nil {
 		return nil, err
 	}
 	return &routes, nil
@@ -244,12 +244,12 @@ func (c *Client) Route(ctx context.Context, waypoints []Point, opts *RouteOption
 
 // IP returns the approximate location of a public IP address.
 func (c *Client) IP(ctx context.Context, ip string) (*IPLocation, error) {
-	return get[IPLocation](ctx, c, "/v1/ip/"+url.PathEscape(ip), nil)
+	return get[IPLocation](ctx, c, "/ip-geolocation/v1/"+url.PathEscape(ip), nil)
 }
 
 // Account returns the key's account. It isn't billed, so it checks a key for free.
 func (c *Client) Account(ctx context.Context) (*Account, error) {
-	return get[Account](ctx, c, "/v1/account", nil)
+	return get[Account](ctx, c, "/account", nil)
 }
 
 func get[T any](ctx context.Context, c *Client, path string, query url.Values) (*T, error) {

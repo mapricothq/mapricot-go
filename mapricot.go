@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.7.0"
+const version = "0.8.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -103,6 +103,12 @@ type Place struct {
 	Lon        float64  `json:"lon"`
 	Address    *Address `json:"address"`
 	Categories []string `json:"categories"`
+	Phones     []string `json:"phones"`
+	Websites   []string `json:"websites"`
+	Socials    []string `json:"socials"`
+	Brand      string   `json:"brand"`
+	// OpeningHours is in OpenStreetMap's opening_hours syntax, such as "Mo-Fr 08:00-18:00".
+	OpeningHours string `json:"openingHours"`
 	// DistanceMeters is set by reverse, nearby, and searches with a focus.
 	DistanceMeters *int   `json:"distanceMeters"`
 	Source         string `json:"source"`

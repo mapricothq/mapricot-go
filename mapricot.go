@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.8.0"
+const version = "0.9.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -142,8 +142,10 @@ type Step struct {
 }
 
 type Route struct {
-	DistanceMeters  int `json:"distanceMeters"`
-	DurationSeconds int `json:"durationSeconds"`
+	// WaypointOrder is set by Optimize: the indexes of the waypoints sent, in the order the route visits them.
+	WaypointOrder   []int `json:"waypointOrder"`
+	DistanceMeters  int   `json:"distanceMeters"`
+	DurationSeconds int   `json:"durationSeconds"`
 	// Polyline is encoded with five decimal places, or six for the polyline6 geometries. It is empty for geojson.
 	Polyline string `json:"polyline"`
 	// Geometry is set for the geojson geometries.
@@ -236,9 +238,9 @@ type PlaceOptions struct {
 	Lang string
 }
 
-// RouteOptions are optional parameters for RoutingService.Route. Mode is "drive" (the default), "walk", or "bicycle". Geometries
-// is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps, and Lang is their
-// ISO 639-1 language, English by default.
+// RouteOptions are optional parameters for RoutingService.Route and Optimize. Mode is "drive" (the default), "walk", or
+// "bicycle". Geometries is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps,
+// and Lang is their ISO 639-1 language, English by default.
 type RouteOptions struct {
 	Mode       string
 	Geometries string
@@ -289,6 +291,16 @@ func (s *PlacesService) Get(ctx context.Context, id string, opts *PlaceOptions) 
 
 // Route finds a route through 2 to 20 waypoints, visited in order.
 func (s *RoutingService) Route(ctx context.Context, waypoints []Point, opts *RouteOptions) (*Routes, error) {
+	return s.route(ctx, "/routing/v1/route", waypoints, opts)
+}
+
+// Optimize finds a fast route through 2 to 20 waypoints, keeping the first and last in place and reordering the
+// rest. Every pair of waypoints must be within 400 km of each other for drive, or 200 km for walk and bicycle.
+func (s *RoutingService) Optimize(ctx context.Context, waypoints []Point, opts *RouteOptions) (*Routes, error) {
+	return s.route(ctx, "/routing/v1/optimize", waypoints, opts)
+}
+
+func (s *RoutingService) route(ctx context.Context, path string, waypoints []Point, opts *RouteOptions) (*Routes, error) {
 	body := struct {
 		Waypoints  []Point `json:"waypoints"`
 		Mode       string  `json:"mode,omitempty"`
@@ -307,7 +319,7 @@ func (s *RoutingService) Route(ctx context.Context, waypoints []Point, opts *Rou
 		return nil, err
 	}
 	var routes Routes
-	if err := s.client.do(ctx, http.MethodPost, "/routing/v1/route", nil, encoded, &routes); err != nil {
+	if err := s.client.do(ctx, http.MethodPost, path, nil, encoded, &routes); err != nil {
 		return nil, err
 	}
 	return &routes, nil

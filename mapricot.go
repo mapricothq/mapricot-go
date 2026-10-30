@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.9.0"
+const version = "0.10.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -119,6 +119,25 @@ type Places struct {
 	Attribution []Attribution `json:"attribution"`
 }
 
+// SearchBatch answers a batch of searches: one SearchResponse per query, in the queries' order.
+type SearchBatch struct {
+	Responses []SearchResponse `json:"responses"`
+}
+
+// SearchResponse is one search's answer in a batch: its results and attribution, or Error, the error the search would
+// get on its own, such as invalid_request or credit_exhausted, which isn't billed.
+type SearchResponse struct {
+	Results     []Place       `json:"results"`
+	Attribution []Attribution `json:"attribution"`
+	Error       *SearchError  `json:"error"`
+}
+
+// SearchError is a search's error in a batch.
+type SearchError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 type PlaceResult struct {
 	Result      Place         `json:"result"`
 	Attribution []Attribution `json:"attribution"`
@@ -219,6 +238,15 @@ type SearchOptions struct {
 	Lang    string
 }
 
+// SearchQuery is one search in a batch, with the same parameters as GeocodingService.Search. Zero values are left out.
+type SearchQuery struct {
+	Q       string
+	Focus   *Point
+	Country []string
+	Limit   int
+	Lang    string
+}
+
 // ReverseOptions are optional parameters for GeocodingService.Reverse. Zero values are left out.
 type ReverseOptions struct {
 	Limit int
@@ -251,6 +279,30 @@ type RouteOptions struct {
 // Search finds addresses and places matching free text.
 func (s *GeocodingService) Search(ctx context.Context, q string, opts *SearchOptions) (*Places, error) {
 	return get[Places](ctx, s.client, "/geocoding/v1/search", searchQuery(q, opts))
+}
+
+// SearchBatch runs up to 100 searches in one request. Each completed search is billed as one request. A search's own
+// error is in its SearchResponse, not returned.
+func (s *GeocodingService) SearchBatch(ctx context.Context, queries []SearchQuery) (*SearchBatch, error) {
+	body := struct {
+		Queries []map[string]string `json:"queries"`
+	}{Queries: make([]map[string]string, len(queries))}
+	for i, q := range queries {
+		params := map[string]string{}
+		for name, values := range searchQuery(q.Q, &SearchOptions{q.Focus, q.Country, q.Limit, q.Lang}) {
+			params[name] = values[0]
+		}
+		body.Queries[i] = params
+	}
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	var batch SearchBatch
+	if err := s.client.do(ctx, http.MethodPost, "/geocoding/v1/search/batch", nil, encoded, &batch); err != nil {
+		return nil, err
+	}
+	return &batch, nil
 }
 
 // Autocomplete suggests addresses and places as someone types.

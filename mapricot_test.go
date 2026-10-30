@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -28,6 +29,16 @@ func TestSearch(t *testing.T) {
 	}
 	if places.Results[0].Address.Locality != "Portland" || len(places.Attribution) == 0 {
 		t.Errorf("got %+v", places)
+	}
+}
+
+func TestSearchBatch(t *testing.T) {
+	batch, err := live(t).Geocoding.SearchBatch(context.Background(), []SearchQuery{{Q: "128 SW 3rd Ave, Portland", Country: []string{"US"}, Limit: 1}, {Q: ""}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first, second := batch.Responses[0], batch.Responses[1]; first.Results[0].Address.Locality != "Portland" || second.Error == nil || second.Error.Code != "invalid_request" {
+		t.Errorf("got %+v", batch.Responses)
 	}
 }
 
@@ -165,6 +176,9 @@ func stub(t *testing.T, failures ...failure) (*Client, *[]string) {
 	var seen []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		seen = append(seen, r.URL.RequestURI())
+		if body, _ := io.ReadAll(r.Body); len(body) > 0 {
+			seen = append(seen, string(body))
+		}
 		w.Header().Set("X-Request-Id", "r1")
 		if len(seen) > len(failures) {
 			w.Write([]byte(`{"id":"a1"}`))
@@ -196,5 +210,15 @@ func TestNoRetryWhenOutOfCredit(t *testing.T) {
 	var apiErr *Error
 	if !errors.As(err, &apiErr) || apiErr.Code != "credit_exhausted" || apiErr.RequestID != "r1" || len(*seen) != 1 {
 		t.Errorf("got %v after %d requests", err, len(*seen))
+	}
+}
+
+func TestSearchBatchSendsQueriesAsSearchParameters(t *testing.T) {
+	client, seen := stub(t)
+	if _, err := client.Geocoding.SearchBatch(context.Background(), []SearchQuery{{Q: "x", Focus: &Point{1, 2}, Country: []string{"US", "CA"}, Limit: 1}}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(*seen, []string{"/geocoding/v1/search/batch", `{"queries":[{"country":"US,CA","focus":"1,2","limit":"1","q":"x"}]}`}) {
+		t.Errorf("requests %v", *seen)
 	}
 }

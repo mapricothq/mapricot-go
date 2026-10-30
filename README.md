@@ -46,6 +46,7 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 | Method | Endpoint |
 | --- | --- |
 | `client.Geocoding.Search(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
+| `client.Geocoding.SearchBatch(ctx, []SearchQuery)` | [`POST /geocoding/v1/search/batch`](https://mapricot.com/docs/geocoding/#search-a-list-of-addresses) |
 | `client.Geocoding.Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
 | `client.Geocoding.Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
 | `client.Places.Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
@@ -58,6 +59,19 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 ```go
 nearby, err := client.Places.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})
 routes, err := client.Routing.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
+```
+
+`SearchBatch` runs up to 100 searches in one request. Each `SearchQuery` has `Search`'s parameters, and `Responses` answers them in the same order, each with `Results` and `Attribution`, or an `Error` with the `Code` and `Message` that search would get, which isn't returned as an error. Each completed search is billed as one request; errors aren't.
+
+```go
+batch, err := client.Geocoding.SearchBatch(ctx, []mapricot.SearchQuery{{Q: "128 SW 3rd Ave, Portland", Limit: 1}, {Q: "10 Downing Street, London", Limit: 1}})
+for _, response := range batch.Responses {
+	if response.Error != nil {
+		fmt.Println(response.Error.Message)
+	} else {
+		fmt.Println(response.Results[0].Label)
+	}
+}
 ```
 
 A route's path comes as an encoded `Polyline` with five decimal places, which polyline decoders assume. Set `Geometries: "geojson"` to get it as a GeoJSON `LineString` in `Geometry` instead, which maps draw without decoding, or `Geometries: "polyline6"` for six decimal places.

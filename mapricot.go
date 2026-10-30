@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.10.0"
+const version = "0.11.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -268,12 +268,14 @@ type PlaceOptions struct {
 
 // RouteOptions are optional parameters for RoutingService.Route and Optimize. Mode is "drive" (the default), "walk", or
 // "bicycle". Geometries is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps,
-// and Lang is their ISO 639-1 language, English by default.
+// and Lang is their ISO 639-1 language, English by default. Costing is Valhalla's costing options for the mode, such as
+// map[string]any{"useTolls": 0}: https://mapricot.com/docs/routing/#costing-options.
 type RouteOptions struct {
 	Mode       string
 	Geometries string
 	Steps      bool
 	Lang       string
+	Costing    map[string]any
 }
 
 // Search finds addresses and places matching free text.
@@ -354,17 +356,19 @@ func (s *RoutingService) Optimize(ctx context.Context, waypoints []Point, opts *
 
 func (s *RoutingService) route(ctx context.Context, path string, waypoints []Point, opts *RouteOptions) (*Routes, error) {
 	body := struct {
-		Waypoints  []Point `json:"waypoints"`
-		Mode       string  `json:"mode,omitempty"`
-		Geometries string  `json:"geometries,omitempty"`
-		Steps      bool    `json:"steps,omitempty"`
-		Lang       string  `json:"lang,omitempty"`
+		Waypoints  []Point        `json:"waypoints"`
+		Mode       string         `json:"mode,omitempty"`
+		Geometries string         `json:"geometries,omitempty"`
+		Steps      bool           `json:"steps,omitempty"`
+		Lang       string         `json:"lang,omitempty"`
+		Costing    map[string]any `json:"costing,omitempty"`
 	}{Waypoints: waypoints}
 	if opts != nil {
 		body.Mode = opts.Mode
 		body.Geometries = opts.Geometries
 		body.Steps = opts.Steps
 		body.Lang = opts.Lang
+		body.Costing = opts.Costing
 	}
 	encoded, err := json.Marshal(body)
 	if err != nil {
@@ -378,19 +382,23 @@ func (s *RoutingService) route(ctx context.Context, path string, waypoints []Poi
 }
 
 // IsochroneOptions are optional parameters for RoutingService.Isochrone. Mode is "drive" (the default), "walk", or "bicycle".
+// Costing is as for RouteOptions.
 type IsochroneOptions struct {
-	Mode string
+	Mode    string
+	Costing map[string]any
 }
 
 // Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 60 minutes.
 func (s *RoutingService) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
 	body := struct {
-		Location Point  `json:"location"`
-		Minutes  []int  `json:"minutes"`
-		Mode     string `json:"mode,omitempty"`
+		Location Point          `json:"location"`
+		Minutes  []int          `json:"minutes"`
+		Mode     string         `json:"mode,omitempty"`
+		Costing  map[string]any `json:"costing,omitempty"`
 	}{Location: location, Minutes: minutes}
 	if opts != nil {
 		body.Mode = opts.Mode
+		body.Costing = opts.Costing
 	}
 	encoded, err := json.Marshal(body)
 	if err != nil {

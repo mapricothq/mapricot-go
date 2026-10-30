@@ -269,7 +269,7 @@ type PlaceOptions struct {
 // RouteOptions are optional parameters for RoutingService.Route and Optimize. Mode is "drive" (the default), "walk", or
 // "bicycle". Geometries is "polyline" (the default), "polyline6", or "geojson". Steps adds each leg's turn-by-turn steps,
 // and Lang is their ISO 639-1 language, English by default. Costing is Valhalla's costing options for the mode, such as
-// map[string]any{"use_tolls": 0}: https://mapricot.com/docs/routing/#costing-options.
+// map[string]any{"useTolls": 0}: https://mapricot.com/docs/routing/#costing-options.
 type RouteOptions struct {
 	Mode       string
 	Geometries string

@@ -141,15 +141,15 @@ func TestRouteCosting(t *testing.T) {
 	if len(routes.Routes[0].Legs) != 1 {
 		t.Errorf("got %+v", routes)
 	}
-	_, err = live(t).Routing.Route(context.Background(), stops, &RouteOptions{Mode: "walk", Costing: map[string]any{"use_tolls": 0}})
+	_, err = live(t).Routing.Route(context.Background(), stops, &RouteOptions{Mode: "walk", Costing: map[string]any{"useTolls": 0}})
 	var apiErr *Error
-	if !errors.As(err, &apiErr) || !strings.Contains(apiErr.Message, "costing.use_tolls isn't an option for walk") {
+	if !errors.As(err, &apiErr) || !strings.Contains(apiErr.Message, "costing.useTolls isn't an option for walk") {
 		t.Errorf("got %v", err)
 	}
 }
 
 func TestIsochroneCosting(t *testing.T) {
-	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5}, &IsochroneOptions{Mode: "walk", Costing: map[string]any{"walking_speed": 3}})
+	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5}, &IsochroneOptions{Mode: "walk", Costing: map[string]any{"walkingSpeed": 3}})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -132,6 +132,32 @@ func TestOptimize(t *testing.T) {
 	}
 }
 
+func TestRouteCosting(t *testing.T) {
+	stops := []Point{{43.7396, 7.4275}, {43.734, 7.4222}}
+	routes, err := live(t).Routing.Route(context.Background(), stops, &RouteOptions{Mode: "walk", Costing: map[string]any{"type": "wheelchair"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(routes.Routes[0].Legs) != 1 {
+		t.Errorf("got %+v", routes)
+	}
+	_, err = live(t).Routing.Route(context.Background(), stops, &RouteOptions{Mode: "walk", Costing: map[string]any{"use_tolls": 0}})
+	var apiErr *Error
+	if !errors.As(err, &apiErr) || !strings.Contains(apiErr.Message, "costing.use_tolls isn't an option for walk") {
+		t.Errorf("got %v", err)
+	}
+}
+
+func TestIsochroneCosting(t *testing.T) {
+	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5}, &IsochroneOptions{Mode: "walk", Costing: map[string]any{"walking_speed": 3}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(isochrones.Features) != 1 {
+		t.Errorf("got %+v", isochrones)
+	}
+}
+
 func TestIsochrone(t *testing.T) {
 	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
 	if err != nil {

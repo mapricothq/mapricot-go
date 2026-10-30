@@ -52,6 +52,7 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 | `client.Places.Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
 | `client.Places.Get(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
 | `client.Routing.Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
+| `client.Routing.Optimize(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/optimize`](https://mapricot.com/docs/routing/#optimize-the-order-of-stops) |
 | `client.Routing.Isochrone(ctx, location, minutes, *IsochroneOptions)` | [`POST /routing/v1/isochrone`](https://mapricot.com/docs/routing/#get-an-isochrone) |
 | `client.IPGeolocation.Lookup(ctx, ip)` | [`GET /ip-geolocation/v1/{ip}`](https://mapricot.com/docs/ip-geolocation/#look-up-an-address) |
 | `client.Account(ctx)` | `GET /account`, which checks a key and is never billed |
@@ -77,6 +78,8 @@ for _, response := range batch.Responses {
 A route's path comes as an encoded `Polyline` with five decimal places, which polyline decoders assume. Set `Geometries: "geojson"` to get it as a GeoJSON `LineString` in `Geometry` instead, which maps draw without decoding, or `Geometries: "polyline6"` for six decimal places.
 
 Set `Steps: true` and each leg's `Steps` has its turn-by-turn directions: an `Instruction`, its distance and time, and its `Lat` and `Lon`. They're in English unless you set `Lang`, such as `Lang: "fr"`.
+
+`Routing.Optimize` takes the same options as `Routing.Route` and returns the route that visits the waypoints in a fast order, keeping the first and last in place. It sets `WaypointOrder`: the indexes of your waypoints in visiting order, which `Legs` follow. Every pair of waypoints must be within 400 km of each other for `drive`, or 200 km for `walk` and `bicycle`.
 
 An isochrone is a GeoJSON `FeatureCollection` with one polygon per time, largest first, so a map that draws them in order shows the smaller ones on top. Each `Geometry.Coordinates` is the polygon's raw GeoJSON coordinates:
 

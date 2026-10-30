@@ -121,6 +121,17 @@ func TestRouteGeoJSON(t *testing.T) {
 	}
 }
 
+func TestOptimize(t *testing.T) {
+	stops := []Point{{43.7396, 7.4275}, {43.7311, 7.4197}, {43.7445, 7.431}, {43.734, 7.4222}}
+	routes, err := live(t).Routing.Optimize(context.Background(), stops, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := routes.Routes[0]; !slices.Equal(got.WaypointOrder, []int{0, 2, 1, 3}) || len(got.Legs) != 3 {
+		t.Errorf("got %+v", routes)
+	}
+}
+
 func TestIsochrone(t *testing.T) {
 	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
 	if err != nil {

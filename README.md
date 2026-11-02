@@ -41,7 +41,7 @@ func main() {
 
 ## Methods
 
-Methods are grouped by product, the same way as the API's paths. Each returns a typed struct with the fields in the [API reference](https://mapricot.com/api-reference/). Options can be `nil`, and their zero values are left out of the request.
+Methods are grouped by product, the same way as the API's paths. Each returns a typed struct with the fields in the [API reference](https://mapricot.com/docs/api-reference/). Options can be `nil`, and their zero values are left out of the request.
 
 | Method | Endpoint |
 | --- | --- |
@@ -103,11 +103,11 @@ if errors.As(err, &apiErr) {
 }
 ```
 
-The client retries `503` responses and `429 concurrency_exceeded`, up to twice, waiting longer each time. Errors aren't billed. Change `client.MaxRetries` and `client.HTTPClient` to change this. The [API reference](https://mapricot.com/api-reference/#errors) lists every status.
+The client retries `503` responses and `429 concurrency_exceeded`, up to twice, waiting longer each time. Errors aren't billed. Change `client.MaxRetries` and `client.HTTPClient` to change this. The [API reference](https://mapricot.com/docs/api-reference/#errors) lists every status.
 
 ## Links
 
 - [Mapricot](https://mapricot.com/)
 - [Go docs](https://mapricot.com/docs/go/)
-- [API reference](https://mapricot.com/api-reference/)
+- [API reference](https://mapricot.com/docs/api-reference/)
 - [Pricing](https://mapricot.com/pricing/)

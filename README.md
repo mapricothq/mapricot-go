@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/mapricothq/mapricot-go.svg)](https://pkg.go.dev/github.com/mapricothq/mapricot-go)
 
-The official Go client for the [Mapricot API](https://mapricot.com/): address and place search, reverse geocoding, nearby places, routing, and IP geolocation, with 250,000 free requests every month.
+The official Go client for the [Mapricot API](https://mapricot.com/): address and place search, reverse geocoding, nearby places, routing, and IP geolocation, with 250,000 free requests every 30 days.
 
 ```sh
 go get github.com/mapricothq/mapricot-go

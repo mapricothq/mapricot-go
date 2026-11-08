@@ -89,6 +89,8 @@ An isochrone is a GeoJSON `FeatureCollection` with one polygon per time, largest
 area, err := client.Routing.Isochrone(ctx, mapricot.Point{Lat: 45.5189, Lon: -122.6793}, []int{5, 10}, &mapricot.IsochroneOptions{Mode: "walk"})
 ```
 
+`Generalize` smooths each outline to within that many meters, from 10 to 5000, so it has fewer points. The API picks it from the travel time when it's zero. A long drive's outlines are detailed and large, and `Generalize: 300` makes them much smaller while keeping their shape at city scale.
+
 If your app shows results, show the credits in each response's `Attribution`.
 
 ## Errors and retries

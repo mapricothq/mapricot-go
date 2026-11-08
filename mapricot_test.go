@@ -158,6 +158,21 @@ func TestIsochroneCosting(t *testing.T) {
 	}
 }
 
+func TestIsochroneGeneralize(t *testing.T) {
+	ctx, client := context.Background(), live(t)
+	detailed, err := client.Routing.Isochrone(ctx, Point{43.7396, 7.4275}, []int{10}, &IsochroneOptions{Mode: "walk"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	smooth, err := client.Routing.Isochrone(ctx, Point{43.7396, 7.4275}, []int{10}, &IsochroneOptions{Mode: "walk", Generalize: 300})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(smooth.Features) != 1 || len(smooth.Features[0].Geometry.Coordinates) >= len(detailed.Features[0].Geometry.Coordinates) {
+		t.Errorf("generalize 300 kept %d bytes of %d", len(smooth.Features[0].Geometry.Coordinates), len(detailed.Features[0].Geometry.Coordinates))
+	}
+}
+
 func TestIsochrone(t *testing.T) {
 	isochrones, err := live(t).Routing.Isochrone(context.Background(), Point{43.7396, 7.4275}, []int{5, 10}, &IsochroneOptions{Mode: "walk"})
 	if err != nil {

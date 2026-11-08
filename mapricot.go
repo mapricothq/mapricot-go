@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.11.0"
+const version = "0.12.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -382,23 +382,27 @@ func (s *RoutingService) route(ctx context.Context, path string, waypoints []Poi
 }
 
 // IsochroneOptions are optional parameters for RoutingService.Isochrone. Mode is "drive" (the default), "walk", or "bicycle".
-// Costing is as for RouteOptions.
+// Costing is as for RouteOptions. Generalize smooths each outline to within that many meters, from 10 to 5000; when it's
+// zero, the API picks it from the travel time.
 type IsochroneOptions struct {
-	Mode    string
-	Costing map[string]any
+	Mode       string
+	Costing    map[string]any
+	Generalize float64
 }
 
 // Isochrone returns the areas reachable from a location within 1 to 4 times, each 1 to 60 minutes.
 func (s *RoutingService) Isochrone(ctx context.Context, location Point, minutes []int, opts *IsochroneOptions) (*Isochrones, error) {
 	body := struct {
-		Location Point          `json:"location"`
-		Minutes  []int          `json:"minutes"`
-		Mode     string         `json:"mode,omitempty"`
-		Costing  map[string]any `json:"costing,omitempty"`
+		Location   Point          `json:"location"`
+		Minutes    []int          `json:"minutes"`
+		Mode       string         `json:"mode,omitempty"`
+		Costing    map[string]any `json:"costing,omitempty"`
+		Generalize float64        `json:"generalize,omitempty"`
 	}{Location: location, Minutes: minutes}
 	if opts != nil {
 		body.Mode = opts.Mode
 		body.Costing = opts.Costing
+		body.Generalize = opts.Generalize
 	}
 	encoded, err := json.Marshal(body)
 	if err != nil {

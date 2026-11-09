@@ -63,7 +63,7 @@ func TestAutocomplete(t *testing.T) {
 }
 
 func TestReverse(t *testing.T) {
-	places, err := live(t).Geocoding.Reverse(context.Background(), 45.5217, -122.6733, &ReverseOptions{Limit: 1})
+	places, err := live(t).Geocoding.Reverse(context.Background(), Point{Lat: 45.5217, Lon: -122.6733}, &ReverseOptions{Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func TestReverse(t *testing.T) {
 }
 
 func TestNearby(t *testing.T) {
-	places, err := live(t).Places.Nearby(context.Background(), 45.52, -122.68, &NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000, Limit: 1})
+	places, err := live(t).Places.Nearby(context.Background(), Point{Lat: 45.52, Lon: -122.68}, &NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000, Limit: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

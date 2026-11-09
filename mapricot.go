@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.13.0"
+const version = "0.14.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -332,8 +332,8 @@ func (s *GeocodingService) Autocomplete(ctx context.Context, q string, opts *Sea
 }
 
 // Reverse finds the address nearest a coordinate, or the area around it.
-func (s *GeocodingService) Reverse(ctx context.Context, lat, lon float64, opts *ReverseOptions) (*Places, error) {
-	query := pointQuery(lat, lon)
+func (s *GeocodingService) Reverse(ctx context.Context, point Point, opts *ReverseOptions) (*Places, error) {
+	query := pointQuery(point)
 	if opts != nil {
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
@@ -342,8 +342,8 @@ func (s *GeocodingService) Reverse(ctx context.Context, lat, lon float64, opts *
 }
 
 // Nearby lists places around a coordinate, optionally by category.
-func (s *PlacesService) Nearby(ctx context.Context, lat, lon float64, opts *NearbyOptions) (*Places, error) {
-	query := pointQuery(lat, lon)
+func (s *PlacesService) Nearby(ctx context.Context, point Point, opts *NearbyOptions) (*Places, error) {
+	query := pointQuery(point)
 	if opts != nil {
 		setString(query, "category", strings.Join(opts.Category, ","))
 		setInt(query, "radius", opts.Radius)
@@ -531,8 +531,8 @@ func addressQuery(parts AddressParts, opts *SearchOptions) url.Values {
 	return query
 }
 
-func pointQuery(lat, lon float64) url.Values {
-	return url.Values{"lat": {formatFloat(lat)}, "lon": {formatFloat(lon)}}
+func pointQuery(point Point) url.Values {
+	return url.Values{"lat": {formatFloat(point.Lat)}, "lon": {formatFloat(point.Lon)}}
 }
 
 func setString(query url.Values, name, value string) {

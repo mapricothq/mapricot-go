@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.12.0"
+const version = "0.13.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -238,9 +238,21 @@ type SearchOptions struct {
 	Lang    string
 }
 
-// SearchQuery is one search in a batch, with the same parameters as GeocodingService.Search. Zero values are left out.
+// AddressParts is an address in parts, such as a spreadsheet's columns, which GeocodingService.SearchAddress takes in
+// place of free text. Zero values are left out.
+type AddressParts struct {
+	Address    string // the street line: house number, street, and any unit or building
+	Locality   string // the town or city
+	County     string
+	Region     string // the state, province, or region
+	PostalCode string
+}
+
+// SearchQuery is one search in a batch, with the parameters of GeocodingService.Search, or of SearchAddress in place of
+// Q. Zero values are left out.
 type SearchQuery struct {
-	Q       string
+	Q string
+	AddressParts
 	Focus   *Point
 	Country []string
 	Limit   int
@@ -283,6 +295,11 @@ func (s *GeocodingService) Search(ctx context.Context, q string, opts *SearchOpt
 	return get[Places](ctx, s.client, "/geocoding/v1/search", searchQuery(q, opts))
 }
 
+// SearchAddress finds an address given in parts.
+func (s *GeocodingService) SearchAddress(ctx context.Context, parts AddressParts, opts *SearchOptions) (*Places, error) {
+	return get[Places](ctx, s.client, "/geocoding/v1/search", addressQuery(parts, opts))
+}
+
 // SearchBatch runs up to 100 searches in one request. Each completed search is billed as one request. A search's own
 // error is in its SearchResponse, not returned.
 func (s *GeocodingService) SearchBatch(ctx context.Context, queries []SearchQuery) (*SearchBatch, error) {
@@ -291,7 +308,9 @@ func (s *GeocodingService) SearchBatch(ctx context.Context, queries []SearchQuer
 	}{Queries: make([]map[string]string, len(queries))}
 	for i, q := range queries {
 		params := map[string]string{}
-		for name, values := range searchQuery(q.Q, &SearchOptions{q.Focus, q.Country, q.Limit, q.Lang}) {
+		query := addressQuery(q.AddressParts, &SearchOptions{q.Focus, q.Country, q.Limit, q.Lang})
+		setString(query, "q", q.Q)
+		for name, values := range query {
 			params[name] = values[0]
 		}
 		body.Queries[i] = params
@@ -489,7 +508,8 @@ func retryable(err *Error) bool {
 }
 
 func searchQuery(q string, opts *SearchOptions) url.Values {
-	query := url.Values{"q": {q}}
+	query := url.Values{}
+	setString(query, "q", q)
 	if opts != nil {
 		if opts.Focus != nil {
 			query.Set("focus", formatFloat(opts.Focus.Lat)+","+formatFloat(opts.Focus.Lon))
@@ -498,6 +518,16 @@ func searchQuery(q string, opts *SearchOptions) url.Values {
 		setInt(query, "limit", opts.Limit)
 		setString(query, "lang", opts.Lang)
 	}
+	return query
+}
+
+func addressQuery(parts AddressParts, opts *SearchOptions) url.Values {
+	query := searchQuery("", opts)
+	setString(query, "address", parts.Address)
+	setString(query, "locality", parts.Locality)
+	setString(query, "county", parts.County)
+	setString(query, "region", parts.Region)
+	setString(query, "postalCode", parts.PostalCode)
 	return query
 }
 

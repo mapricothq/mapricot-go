@@ -32,6 +32,16 @@ func TestSearch(t *testing.T) {
 	}
 }
 
+func TestSearchAddress(t *testing.T) {
+	places, err := live(t).Geocoding.SearchAddress(context.Background(), AddressParts{Address: "128 SW 3rd Ave", Locality: "Portland"}, &SearchOptions{Country: []string{"US"}, Limit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if places.Results[0].Address.Locality != "Portland" {
+		t.Errorf("got %+v", places)
+	}
+}
+
 func TestSearchBatch(t *testing.T) {
 	batch, err := live(t).Geocoding.SearchBatch(context.Background(), []SearchQuery{{Q: "128 SW 3rd Ave, Portland", Country: []string{"US"}, Limit: 1}, {Q: ""}})
 	if err != nil {
@@ -256,6 +266,16 @@ func TestRetries(t *testing.T) {
 	}
 }
 
+func TestSearchAddressSendsPartsInPlaceOfQ(t *testing.T) {
+	client, seen := stub(t)
+	if _, err := client.Geocoding.SearchAddress(context.Background(), AddressParts{Address: "10 Downing Street", PostalCode: "SW1A 2AA"}, &SearchOptions{Country: []string{"GB"}}); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(*seen, []string{"/geocoding/v1/search?address=10+Downing+Street&country=GB&postalCode=SW1A+2AA"}) {
+		t.Errorf("requests %v", *seen)
+	}
+}
+
 func TestNoRetryWhenOutOfCredit(t *testing.T) {
 	client, seen := stub(t, failure{429, "credit_exhausted"})
 	_, err := client.Account(context.Background())
@@ -267,10 +287,10 @@ func TestNoRetryWhenOutOfCredit(t *testing.T) {
 
 func TestSearchBatchSendsQueriesAsSearchParameters(t *testing.T) {
 	client, seen := stub(t)
-	if _, err := client.Geocoding.SearchBatch(context.Background(), []SearchQuery{{Q: "x", Focus: &Point{1, 2}, Country: []string{"US", "CA"}, Limit: 1}}); err != nil {
+	if _, err := client.Geocoding.SearchBatch(context.Background(), []SearchQuery{{Q: "x", Focus: &Point{1, 2}, Country: []string{"US", "CA"}, Limit: 1}, {AddressParts: AddressParts{Address: "10 Downing Street", Locality: "London"}}}); err != nil {
 		t.Fatal(err)
 	}
-	if !slices.Equal(*seen, []string{"/geocoding/v1/search/batch", `{"queries":[{"country":"US,CA","focus":"1,2","limit":"1","q":"x"}]}`}) {
+	if !slices.Equal(*seen, []string{"/geocoding/v1/search/batch", `{"queries":[{"country":"US,CA","focus":"1,2","limit":"1","q":"x"},{"address":"10 Downing Street","locality":"London"}]}`}) {
 		t.Errorf("requests %v", *seen)
 	}
 }

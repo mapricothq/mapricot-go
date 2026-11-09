@@ -46,6 +46,7 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 | Method | Endpoint |
 | --- | --- |
 | `client.Geocoding.Search(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#find-an-address) |
+| `client.Geocoding.SearchAddress(ctx, AddressParts, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#send-an-address-in-parts) with the address in parts |
 | `client.Geocoding.SearchBatch(ctx, []SearchQuery)` | [`POST /geocoding/v1/search/batch`](https://mapricot.com/docs/geocoding/#search-a-list-of-addresses) |
 | `client.Geocoding.Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
 | `client.Geocoding.Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
@@ -62,7 +63,13 @@ nearby, err := client.Places.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions
 routes, err := client.Routing.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
 ```
 
-`SearchBatch` runs up to 100 searches in one request. Each `SearchQuery` has `Search`'s parameters, and `Responses` answers them in the same order, each with `Results` and `Attribution`, or an `Error` with the `Code` and `Message` that search would get, which isn't returned as an error. Each completed search is billed as one request; errors aren't.
+`SearchAddress` searches for an address you already have in parts, such as a spreadsheet's columns, in place of free text. Search ignores a blank part:
+
+```go
+places, err := client.Geocoding.SearchAddress(ctx, mapricot.AddressParts{Address: "10 Downing Street", Locality: "London", PostalCode: "SW1A 2AA"}, &mapricot.SearchOptions{Country: []string{"GB"}})
+```
+
+`SearchBatch` runs up to 100 searches in one request. Each `SearchQuery` has `Search`'s parameters, or `SearchAddress`'s `AddressParts` in place of `Q`, and `Responses` answers them in the same order, each with `Results` and `Attribution`, or an `Error` with the `Code` and `Message` that search would get, which isn't returned as an error. Each completed search is billed as one request; errors aren't.
 
 ```go
 batch, err := client.Geocoding.SearchBatch(ctx, []mapricot.SearchQuery{{Q: "128 SW 3rd Ave, Portland", Limit: 1}, {Q: "10 Downing Street, London", Limit: 1}})

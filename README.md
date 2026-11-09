@@ -49,8 +49,8 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 | `client.Geocoding.SearchAddress(ctx, AddressParts, *SearchOptions)` | [`GET /geocoding/v1/search`](https://mapricot.com/docs/geocoding/#send-an-address-in-parts) with the address in parts |
 | `client.Geocoding.SearchBatch(ctx, []SearchQuery)` | [`POST /geocoding/v1/search/batch`](https://mapricot.com/docs/geocoding/#search-a-list-of-addresses) |
 | `client.Geocoding.Autocomplete(ctx, q, *SearchOptions)` | [`GET /geocoding/v1/autocomplete`](https://mapricot.com/docs/geocoding/#suggest-as-people-type) |
-| `client.Geocoding.Reverse(ctx, lat, lon, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
-| `client.Places.Nearby(ctx, lat, lon, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
+| `client.Geocoding.Reverse(ctx, Point, *ReverseOptions)` | [`GET /geocoding/v1/reverse`](https://mapricot.com/docs/geocoding/#find-the-address-at-a-point) |
+| `client.Places.Nearby(ctx, Point, *NearbyOptions)` | [`GET /places/v1/nearby`](https://mapricot.com/docs/places/#list-places-around-a-point) |
 | `client.Places.Get(ctx, id, *PlaceOptions)` | [`GET /places/v1/{id}`](https://mapricot.com/docs/places/#look-up-a-saved-place) |
 | `client.Routing.Route(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/route`](https://mapricot.com/docs/routing/#get-a-route) |
 | `client.Routing.Optimize(ctx, waypoints, *RouteOptions)` | [`POST /routing/v1/optimize`](https://mapricot.com/docs/routing/#optimize-the-order-of-stops) |
@@ -59,7 +59,7 @@ Methods are grouped by product, the same way as the API's paths. Each returns a 
 | `client.Account(ctx)` | `GET /account`, which checks a key and is never billed |
 
 ```go
-nearby, err := client.Places.Nearby(ctx, 45.52, -122.68, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})
+nearby, err := client.Places.Nearby(ctx, mapricot.Point{Lat: 45.52, Lon: -122.68}, &mapricot.NearbyOptions{Category: []string{"food:coffee_shop"}, Radius: 1000})
 routes, err := client.Routing.Route(ctx, []mapricot.Point{{Lat: 45.5189, Lon: -122.6793}, {Lat: 45.5214, Lon: -122.6828}}, &mapricot.RouteOptions{Mode: "walk"})
 ```
 

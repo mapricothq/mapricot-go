@@ -88,12 +88,21 @@ func TestPlacesGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if places.Results[0].ID == "" {
+		t.Fatalf("search result has no ID: %+v", places.Results[0])
+	}
 	place, err := client.Places.Get(context.Background(), places.Results[0].ID, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if place.Result.ID != places.Results[0].ID {
 		t.Errorf("got %+v", place.Result)
+	}
+}
+
+func TestPlacesGetEmptyID(t *testing.T) {
+	if _, err := NewClient("key").Places.Get(context.Background(), "", nil); err == nil {
+		t.Error("expected an error for an empty ID")
 	}
 }
 

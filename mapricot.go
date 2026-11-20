@@ -358,6 +358,9 @@ func (s *PlacesService) Nearby(ctx context.Context, point Point, opts *NearbyOpt
 
 // Get looks up one place by its Mapricot ID. An ID that no longer resolves returns an *Error with Status 404.
 func (s *PlacesService) Get(ctx context.Context, id string, opts *PlaceOptions) (*PlaceResult, error) {
+	if id == "" {
+		return nil, fmt.Errorf("mapricot: empty place ID; an interpolated address has none, so search again to find it")
+	}
 	query := url.Values{}
 	if opts != nil {
 		setString(query, "lang", opts.Lang)

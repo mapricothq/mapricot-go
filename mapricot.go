@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "0.14.0"
+const version = "0.15.0"
 
 // Client calls the Mapricot API. Make one with NewClient. Its methods are grouped by product, as in
 // client.Geocoding.Search. Its settings can be changed before first use.
@@ -95,6 +95,7 @@ type Address struct {
 }
 
 type Place struct {
+	// ID is empty on an estimated address, which isn't a stored place.
 	ID         string   `json:"id"`
 	Type       string   `json:"type"`
 	Name       string   `json:"name"`
@@ -110,8 +111,10 @@ type Place struct {
 	// OpeningHours is in OpenStreetMap's opening_hours syntax, such as "Mo-Fr 08:00-18:00".
 	OpeningHours string `json:"openingHours"`
 	// DistanceMeters is set by reverse, nearby, and searches with a focus.
-	DistanceMeters *int   `json:"distanceMeters"`
-	Source         string `json:"source"`
+	DistanceMeters *int `json:"distanceMeters"`
+	// Interpolated is true for an address estimated between the known house numbers on either side of it on its street.
+	Interpolated bool   `json:"interpolated"`
+	Source       string `json:"source"`
 }
 
 type Places struct {
@@ -355,6 +358,9 @@ func (s *PlacesService) Nearby(ctx context.Context, point Point, opts *NearbyOpt
 
 // Get looks up one place by its Mapricot ID. An ID that no longer resolves returns an *Error with Status 404.
 func (s *PlacesService) Get(ctx context.Context, id string, opts *PlaceOptions) (*PlaceResult, error) {
+	if id == "" {
+		return nil, fmt.Errorf("mapricot: empty place ID; an interpolated address has none, so search again to find it")
+	}
 	query := url.Values{}
 	if opts != nil {
 		setString(query, "lang", opts.Lang)
